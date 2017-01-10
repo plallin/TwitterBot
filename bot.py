@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import tweepy, time, sys
+import tweepy, os
 import requests
 import praw
 from config import CONSUMER_KEY, SECRET_ACCESS_TOKEN, ACCESS_TOKEN, SECRET_CONSUMER_KEY
@@ -10,16 +10,16 @@ MAX_MESSAGE_LENGTH = 140
 
 try:
     # Connect to Twitter
+    print("Connect to Twitter--------------------------------------------------------------------------------", end=" ")
     auth = tweepy.OAuthHandler(CONSUMER_KEY, SECRET_CONSUMER_KEY)
     auth.set_access_token(ACCESS_TOKEN, SECRET_ACCESS_TOKEN)
     api = tweepy.API(auth)
-    print("Connect to Twitter--------------------------------------------------------------------------------", end=" ")
+    print("OK")
 
     # Get top post of the day
-    reddit = praw.Reddit('bot1')
-    subreddit = reddit.subreddit("catpictures")
-
     print("Get top post--------------------------------------------------------------------------------------", end=" ")
+    reddit = praw.Reddit('kittykittybot')
+    subreddit = reddit.subreddit("catpictures")
     top_post = subreddit.top(limit=1, time_filter="day").next()
     post_title = top_post.title
     post_link = top_post.shortlink
@@ -39,7 +39,7 @@ try:
     # Prepare status update
     print("Set up status update------------------------------------------------------------------------------", end=" ")
     post_link_length = len(post_link)
-    end_of_message = " - via " + post_link + "#Caturday"
+    end_of_message = " - via " + post_link + " #Caturday"
     message_status = post_title + end_of_message
 
     if len(message_status) > MAX_MESSAGE_LENGTH:
@@ -50,6 +50,9 @@ try:
     print("Post to Twitter-----------------------------------------------------------------------------------", end=" ")
     api.update_with_media(kitten_pic, status=message_status)
     print("OK")
+
+    #delete picture
+    os.remove(kitten_pic)
 except:
     print("FAIL")
-    api.update_status("@plallin OMG! I AM BREAKEN! PLZ FIX ")
+    #api.update_status("@plallin OMG! I AM BREAKEN! PLZ FIX ")
