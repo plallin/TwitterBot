@@ -2,22 +2,54 @@
 # -*- coding: utf-8 -*-
 
 import tweepy, time, sys
+import requests
+import praw
+from config import CONSUMER_KEY, SECRET_ACCESS_TOKEN, ACCESS_TOKEN, SECRET_CONSUMER_KEY
 
-argfile = str(sys.argv[1])
+MAX_MESSAGE_LENGTH = 140
 
-# enter the corresponding information from your Twitter application:
-CONSUMER_KEY = 'M0KJwJ9rXdu4Rr6IbQtuYJ8uC'  # keep the quotes, replace this with your consumer key
-CONSUMER_SECRET = 'KWKDkv7sRTyFZi1TafkzASRhglxklD3du0mh6U1Qt6poIKWfUG'  # keep the quotes, replace this with your consumer secret key
-ACCESS_KEY = '159480948-Tr3QBQH0l6DIKL6gsrqvCHKzZsytw4Fu2FpbouEP'  # keep the quotes, replace this with your access token
-ACCESS_SECRET = '82y9Dwwrf03aN5DVgIEKHPvcbBVaK1HKHNCNCVCfEiERm'  # keep the quotes, replace this with your access token secret
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-api = tweepy.API(auth)
+try:
+    # Connect to Twitter
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, SECRET_CONSUMER_KEY)
+    auth.set_access_token(ACCESS_TOKEN, SECRET_ACCESS_TOKEN)
+    api = tweepy.API(auth)
+    print("Connect to Twitter--------------------------------------------------------------------------------", end=" ")
 
-filename = open(argfile, 'r')
-f = filename.readlines()
-filename.close()
+    # Get top post of the day
+    reddit = praw.Reddit('bot1')
+    subreddit = reddit.subreddit("catpictures")
 
-for line in f:
-    api.update_status(line)
-    time.sleep(900)  # Tweet every 15 minutes
+    print("Get top post--------------------------------------------------------------------------------------", end=" ")
+    top_post = subreddit.top(limit=1, time_filter="day").next()
+    post_title = top_post.title
+    post_link = top_post.shortlink
+    post_pic_url = top_post.url
+    print("OK")
+
+    # Download cat pic
+    print("Download image------------------------------------------------------------------------------------", end=" ")
+    kitten_pic = "kittykitty.jpg"
+    req = requests.get(post_pic_url, stream=True)
+    if req.status_code == 200:
+        with open(kitten_pic, "wb") as img:
+            for chunk in req:
+                img.write(chunk)
+    print("OK")
+
+    # Prepare status update
+    print("Set up status update------------------------------------------------------------------------------", end=" ")
+    post_link_length = len(post_link)
+    end_of_message = " - via " + post_link + "#Caturday"
+    message_status = post_title + end_of_message
+
+    if len(message_status) > MAX_MESSAGE_LENGTH:
+        message_status = post_title[: MAX_MESSAGE_LENGTH - len(end_of_message) - 4] + "..." + end_of_message
+    print("OK")
+
+    # Post to Twitter
+    print("Post to Twitter-----------------------------------------------------------------------------------", end=" ")
+    api.update_with_media(kitten_pic, status=message_status)
+    print("OK")
+except:
+    print("FAIL")
+    api.update_status("@plallin OMG! I AM BREAKEN! PLZ FIX ")
