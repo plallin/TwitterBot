@@ -8,6 +8,7 @@ from config import CONSUMER_KEY, SECRET_ACCESS_TOKEN, ACCESS_TOKEN, SECRET_CONSU
 
 MAX_MESSAGE_LENGTH = 140
 
+
 try:
     # Connect to Twitter
     print("Connect to Twitter--------------------------------------------------------------------------------", end=" ")
@@ -23,7 +24,7 @@ try:
     top_post = subreddit.top(limit=1, time_filter="day").next()
     post_title = top_post.title
     post_link = top_post.shortlink
-    post_pic_url = top_post.url
+    post_pic_url = "http://imgur.com/1VaF5nE"
     print("OK")
 
     # Download cat pic
@@ -48,11 +49,11 @@ try:
 
     # Post to Twitter
     print("Post to Twitter-----------------------------------------------------------------------------------", end=" ")
-    api.update_with_media(kitten_pic, status=message_status)
+    # api.update_with_media(kitten_pic, status=message_status)
     print("OK")
 
     #delete picture
-    os.remove(kitten_pic)
+    # os.remove(kitten_pic)
 except:
     print("FAIL")
-    #api.update_status("@plallin OMG! I AM BREAKEN! PLZ FIX ")
+    api.update_status("@plallin OMG! I AM BREAKEN! PLZ FIX ")
