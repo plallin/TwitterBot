@@ -7,7 +7,8 @@ import praw
 import json
 import os
 from PIL import Image
-
+import logging
+import sys
 
 class TwitterBot:
     MAX_MESSAGE_LENGTH = 140
@@ -111,10 +112,23 @@ class TwitterBot:
             auth = tweepy.OAuthHandler(self._CONSUMER_KEY, self._SECRET_CONSUMER_KEY)
             auth.set_access_token(self._ACCESS_TOKEN, self._SECRET_ACCESS_TOKEN)
             api = tweepy.API(auth)
+            print("status:", self.status_update_message())
+            print("link:", self.reddit_post.url)
+            print("post title:", self.reddit_post.title)
+            print("pic link:", self.reddit_post.picture_url)
             #api.update_with_media(self.picture, status=status_update)
         except tweepy.error.TweepError as err:
-            print(err)
-            # api.update_status(self.error_message())
+            logging.basicConfig(filename='other_error.log',
+                                filemode='a',
+                                level=logging.DEBUG,
+                                format='%(asctime)s %(message)s')
+            logging.exception('\n\nError raised')
+        except Exception:
+            logging.basicConfig(filename='other_error.log',
+                                filemode='a',
+                                level=logging.DEBUG,
+                                format='%(asctime)s %(message)s')
+            logging.exception('\n\nUnexpected error')
 
 
 class RedditPost:
@@ -196,7 +210,8 @@ class RedditPost:
         subreddit = reddit.subreddit(self.subreddit)
         all_top_posts = subreddit.top(limit=10, time_filter="hour")
         top_post = all_top_posts.next()
-        while not "imgur.com" in top_post.url or "reddituploads.com" in top_post.url:
+        while not ("imgur.com" in top_post.url or "reddituploads.com" in top_post.url):
+            print(top_post.url)
             top_post = all_top_posts.next()
         self._title = top_post.title
         self._url = top_post.shortlink
