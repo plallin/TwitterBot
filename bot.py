@@ -9,6 +9,7 @@ import os
 from PIL import Image
 import logging
 import sys
+from config import ACCESS_TOKEN, SECRET_ACCESS_TOKEN, CONSUMER_KEY, SECRET_CONSUMER_KEY
 
 class TwitterBot:
     MAX_MESSAGE_LENGTH = 140
@@ -23,7 +24,6 @@ class TwitterBot:
         self._SECRET_CONSUMER_KEY = None
         self._ACCESS_TOKEN = None
         self._SECRET_ACCESS_TOKEN = None
-        self._update_rate = None
         self._hashtags = None
         self._error_message = None
 
@@ -99,30 +99,34 @@ class TwitterBot:
     def status_update_message(self):
         message = self.reddit_post.title
         link = " via " + self.reddit_post.url
-        i = 0
-        while i < len(self.hashtags) and len(message + " " + self.hashtags[i] + link) < type(self).MAX_MESSAGE_LENGTH:
-            message += " " + self.hashtags[i]
-            i += 1
+        if len(message + link) > 140:
+            message = message[:140 - len(link) - 3] + "..."
+        else:
+            i = 0
+            while i < len(self.hashtags) and len(message + " " + self.hashtags[i] + link) < type(self).MAX_MESSAGE_LENGTH:
+                message += " " + self.hashtags[i]
+                i += 1
         return message + link
 
     def post_to_twitter(self):
         self.download_pic()
-        status_update = self.status_update_message()
+        status_update = "I am writing sth"
         try:
             auth = tweepy.OAuthHandler(self._CONSUMER_KEY, self._SECRET_CONSUMER_KEY)
             auth.set_access_token(self._ACCESS_TOKEN, self._SECRET_ACCESS_TOKEN)
             api = tweepy.API(auth)
-            print("status:", self.status_update_message())
-            print("link:", self.reddit_post.url)
+            print("status:", status_update)
             print("post title:", self.reddit_post.title)
+            print("link:", self.reddit_post.url)
             print("pic link:", self.reddit_post.picture_url)
-            #api.update_with_media(self.picture, status=status_update)
+            api.update_with_media("AllThingsKute_pic.jpg", status="123")
         except tweepy.error.TweepError as err:
-            logging.basicConfig(filename='other_error.log',
+            print(type(err), err)
+            logging.basicConfig(filename='error.log',
                                 filemode='a',
                                 level=logging.DEBUG,
                                 format='%(asctime)s %(message)s')
-            logging.exception('\n\nError raised')
+            logging.exception('\n\n******Error raised******')
         except Exception:
             logging.basicConfig(filename='other_error.log',
                                 filemode='a',
@@ -208,7 +212,7 @@ class RedditPost:
                              client_secret=self.client_secret,
                              user_agent=self.user_agent)
         subreddit = reddit.subreddit(self.subreddit)
-        all_top_posts = subreddit.top(limit=10, time_filter="hour")
+        all_top_posts = subreddit.top(limit=10, time_filter=self.top_timeframe)
         top_post = all_top_posts.next()
         while not ("imgur.com" in top_post.url or "reddituploads.com" in top_post.url):
             print(top_post.url)
