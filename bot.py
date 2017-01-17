@@ -8,7 +8,7 @@ import json
 import os
 from PIL import Image
 import logging
-
+import sys
 
 class TwitterBot:
     MAX_MESSAGE_LENGTH = 140
@@ -222,5 +222,6 @@ class RedditPost:
 
 
 if __name__ == "__main__":
-    botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
+    print(sys.argv)
+    botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
     botty_mcbotface.post_to_twitter()
