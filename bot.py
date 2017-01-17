@@ -8,8 +8,7 @@ import json
 import os
 from PIL import Image
 import logging
-import sys
-from config import ACCESS_TOKEN, SECRET_ACCESS_TOKEN, CONSUMER_KEY, SECRET_CONSUMER_KEY
+
 
 class TwitterBot:
     MAX_MESSAGE_LENGTH = 140
@@ -52,17 +51,12 @@ class TwitterBot:
         return self._SECRET_ACCESS_TOKEN
 
     @property
-    def update_rate(self):
-        if not self._update_rate:
-            self.read_config_file()
-        return self._update_rate
-
-    @property
     def hashtags(self):
         if not self._hashtags:
             self.read_config_file()
         return self._hashtags
 
+    @property
     def error_message(self):
         if not self.error_message():
             self.read_config_file()
@@ -77,8 +71,6 @@ class TwitterBot:
         self._SECRET_CONSUMER_KEY = data["secret_consumer_key"]
         self._ACCESS_TOKEN = data["access_token"]
         self._SECRET_ACCESS_TOKEN = data["secret_access_token"]
-        self._subreddit = data["subreddit"]
-        self._update_rate = data["update_rate"]
         self._hashtags = data["hashtags"]
         self._error_message = data["error_message"]
 
@@ -110,16 +102,13 @@ class TwitterBot:
 
     def post_to_twitter(self):
         self.download_pic()
-        status_update = "I am writing sth"
+        status_update = self.status_update_message()
         try:
-            auth = tweepy.OAuthHandler(self._CONSUMER_KEY, self._SECRET_CONSUMER_KEY)
-            auth.set_access_token(self._ACCESS_TOKEN, self._SECRET_ACCESS_TOKEN)
+            auth = tweepy.OAuthHandler(self.CONSUMER_KEY, self.SECRET_CONSUMER_KEY)
+            auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
             api = tweepy.API(auth)
-            print("status:", status_update)
-            print("post title:", self.reddit_post.title)
-            print("link:", self.reddit_post.url)
-            print("pic link:", self.reddit_post.picture_url)
-            api.update_with_media("AllThingsKute_pic.jpg", status="123")
+            api.update_with_media(self.picture, status=status_update)
+            os.remove(self.picture)
         except tweepy.error.TweepError as err:
             print(type(err), err)
             logging.basicConfig(filename='error.log',
@@ -127,7 +116,8 @@ class TwitterBot:
                                 level=logging.DEBUG,
                                 format='%(asctime)s %(message)s')
             logging.exception('\n\n******Error raised******')
-        except Exception:
+        except Exception as err:
+            print(type(err), err)
             logging.basicConfig(filename='other_error.log',
                                 filemode='a',
                                 level=logging.DEBUG,
@@ -234,4 +224,3 @@ class RedditPost:
 if __name__ == "__main__":
     botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
     botty_mcbotface.post_to_twitter()
-    print(botty_mcbotface.reddit_post.top_timeframe)
