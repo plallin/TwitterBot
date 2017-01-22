@@ -134,19 +134,21 @@ class TwitterBot:
         """
         self.download_picture()
         status_update = self.status_update_message()
+        auth = tweepy.OAuthHandler(self.CONSUMER_KEY, self.SECRET_CONSUMER_KEY)
+        auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
+        api = tweepy.API(auth)
         try:
-            auth = tweepy.OAuthHandler(self.CONSUMER_KEY, self.SECRET_CONSUMER_KEY)
-            auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
-            api = tweepy.API(auth)
             api.update_with_media(self.picture, status=status_update)
-            os.remove(self.picture)
         except tweepy.error.TweepError as err:
             print(type(err), err)
             logging.exception('\n\n******Error raised******')
             logging.error("status update:", status_update)
+            api.update_status(self.error_message)
         except Exception as err:
             print(type(err), err)
             logging.exception('\n\nUnexpected error')
+        finally:
+            os.remove(self.picture)
 
 
 if __name__ == "__main__":
