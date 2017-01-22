@@ -1,5 +1,7 @@
 decorator==4.0.10
 oauthlib==2.0.1
+olefile==0.44
+Pillow==4.0.0
 praw==4.2.0
 prawcore==0.6.0
 requests==2.12.4
