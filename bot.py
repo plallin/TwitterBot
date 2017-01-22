@@ -17,8 +17,11 @@ logging.basicConfig(filename='unexpected_error.log',
 
 
 class TwitterBot:
-    MAX_MESSAGE_LENGTH = 140
-    MAX_IMAGE_SIZE_BYTES = 3072000
+
+    """A Twitter bot that scraps content from Reddit and post it to Twitter."""
+
+    MAX_MESSAGE_LENGTH = 140  # maximum status length allowed by Twitter
+    MAX_IMAGE_SIZE_BYTES = 3072000  # maximum size of media allowed by Twitter
 
     def __init__(self, twitter_account, config_file):
         self.twitter_account = twitter_account
@@ -69,6 +72,16 @@ class TwitterBot:
         return self._error_message
 
     def read_config_file(self):
+        """
+        Reads the config file and set the following attributes:
+            _CONSUMER_KEY: the consumer key of the Twitter app
+            _SECRET_CONSUMER_KEY: the secret consumer key of the Twitter app
+            _ACCESS_TOKEN: the access token of the twitter app
+            _SECRET_ACCESS_TOKEN: the secret access token of the Twitter app
+            _hashtags: the list of hashtags to be added to the Twitter status
+            _error_message: an error message to be twitted in case of error
+        """
+
         with open(self.config_file) as data_file:
             data = json.load(data_file)
 
@@ -81,6 +94,9 @@ class TwitterBot:
         self._error_message = data["error_message"]
 
     def download_picture(self):
+        """
+        Downloads the picture from the top reddit post and resizes it if its size is above the maximum size allowed.
+        """
         req = requests.get(self.reddit_post.picture_url, stream=True)
         if req.status_code == 200:
             with open(self.picture, "wb") as img:
@@ -90,11 +106,16 @@ class TwitterBot:
             self.resize_picture()
 
     def resize_picture(self):
+        """Resize the picture if it is above the maximum size allowed"""
         picture = Image.open(self.picture).convert('RGB')
         picture = picture.resize((picture.size[0] // 2, picture.size[1] // 2), Image.ANTIALIAS)
         picture.save(self.picture, optimize=True, quality=85)
 
     def status_update_message(self):
+        """
+        Prepare the status update. It takes the title of the top reddit post, the url to the post, and the list of
+        hashtags. It will add hashtags until it runs out of characters (140 characters max).
+        """
         message = self.reddit_post.title
         link = " via " + self.reddit_post.url
         if len(message + link) > 140:
@@ -107,6 +128,10 @@ class TwitterBot:
         return message + link
 
     def post_to_twitter(self):
+        """
+        Posts a picture and a status to Twitter.
+        Will log errors to error.log.
+        """
         self.download_picture()
         status_update = self.status_update_message()
         try:
