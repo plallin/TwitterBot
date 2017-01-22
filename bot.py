@@ -111,7 +111,7 @@ class TwitterBot:
         picture = picture.resize((picture.size[0] // 2, picture.size[1] // 2), Image.ANTIALIAS)
         picture.save(self.picture, optimize=True, quality=85)
 
-    def status_update_message(self):
+    def define_status_update(self):
         """
         Prepare the status update. It takes the title of the top reddit post, the url to the post, and the list of
         hashtags. It will add hashtags until it runs out of characters (140 characters max).
@@ -133,7 +133,7 @@ class TwitterBot:
         Will log errors to error.log.
         """
         self.download_picture()
-        status_update = self.status_update_message()
+        status_update = self.define_status_update()
         auth = tweepy.OAuthHandler(self.CONSUMER_KEY, self.SECRET_CONSUMER_KEY)
         auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
         api = tweepy.API(auth)
