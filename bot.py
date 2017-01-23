@@ -17,6 +17,7 @@ class TwitterBot:
 
     MAX_MESSAGE_LENGTH = 140  # maximum status length allowed by Twitter
     MAX_IMAGE_SIZE_BYTES = 3072000  # maximum size of media allowed by Twitter
+    LINK_LENGTH = 23  # Links posted to Twitter are always counted as 23 characters regardless of their actual length
 
     def __init__(self, twitter_account, config_file):
         self.twitter_account = twitter_account
@@ -112,15 +113,17 @@ class TwitterBot:
         hashtags. It will add hashtags until it runs out of characters (140 characters max).
         """
         message = self.reddit_post.title
-        link = " via " + self.reddit_post.url
-        if len(message + link) > 140:
-            message = message[:140 - len(link) - 3] + "..."
+        via = " via "
+        if len(message) + len(via) + type(self).LINK_LENGTH > 140:
+            eom_characters = "..."
+            message = message[:140 - len(eom_characters) - len(via) - type(self).LINK_LENGTH] + eom_characters
         else:
             i = 0
-            while i < len(self.hashtags) and len(message + " " + self.hashtags[i] + link) < type(self).MAX_MESSAGE_LENGTH:
+            while i < len(self.hashtags) and len(message) + len(via) + type(self).LINK_LENGTH + len(self.hashtags[i]) < type(self).MAX_MESSAGE_LENGTH:
                 message += " " + self.hashtags[i]
                 i += 1
-        return message + link
+        final_message = message + via + self.reddit_post.url
+        return final_message
 
     def post_to_twitter(self):
         """
