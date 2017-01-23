@@ -10,10 +10,10 @@ import logging
 import sys
 from scrap_reddit import RedditPost
 
-logging.basicConfig(filename='unexpected_error.log',
+logging.basicConfig(filename='error.log',
                     filemode='a',
                     level=logging.DEBUG,
-                    format='%(asctime)s %(message)s')
+                    format='\n\n%(asctime)s %(message)s')
 
 
 class TwitterBot:
@@ -141,12 +141,13 @@ class TwitterBot:
             api.update_with_media(self.picture, status=status_update)
         except tweepy.error.TweepError as err:
             print(type(err), err)
-            logging.exception('\n\n******Error raised******')
-            logging.error("status update:", status_update)
+            logging.exception('********Tweepy error********')
+            logging.error("status update: " + status_update)
             api.update_status(self.error_message)
         except Exception as err:
             print(type(err), err)
-            logging.exception('\n\nUnexpected error')
+            logging.exception('******Unexpected error******')
+            logging.error("status update: " + status_update)
         finally:
             os.remove(self.picture)
 
