@@ -116,7 +116,10 @@ class RedditPost:
         self._picture_url = top_post.url
 
     def format_picture_url(self):
-        """Format the picture url so it links directly to the picture."""
+        """
+        Format the picture url so it links directly to the picture.
+        Works even if the picture format is not .jpg
+        """
         domain = self._picture_url[:self._picture_url.rfind("/")]
         path = self._picture_url[self._picture_url.rfind("/"):]
         extension = path.rfind(".")

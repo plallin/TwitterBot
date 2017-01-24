@@ -16,6 +16,7 @@ logging.basicConfig(filename='error.log',
                     level=logging.INFO,
                     format='%(asctime)s\n%(message)s')
 
+
 class TwitterBot:
 
     """A Twitter bot that scraps content from Reddit and post it to Twitter."""
@@ -98,19 +99,19 @@ class TwitterBot:
         """
         Downloads the picture from the top reddit post and resizes it if its size is above the maximum size allowed.
         """
-        # req = requests.get(self.reddit_post.picture_url, stream=True)
-        # if req.status_code == 200:
-        #     with open(self.picture, "wb") as img:
-        #         for chunk in req:
-        #             img.write(chunk)
-        self.picture = "heavy"
+        req = requests.get(self.reddit_post.picture_url, stream=True)
+        if req.status_code == 200:
+            with open(self.picture, "wb") as img:
+                for chunk in req:
+                    img.write(chunk)
         picture_size = os.stat(self.picture).st_size
         if picture_size <= type(self).MAX_IMAGE_SIZE_BYTES:
             try:
                 im = Image.open(self.picture)
                 im_format = im.format
             except OSError:
-                im_format = "JPG"  # if format is unknown, we will try to post to post the picture as a JPG as Twitter may allow it
+                # if format is unknown, we will try to post to post the picture as a JPG as Twitter may allow it
+                im_format = "JPG"
             new_name = self.picture + "." + im_format
             os.rename(self.picture, new_name)
             self.picture = new_name
@@ -122,7 +123,8 @@ class TwitterBot:
                 print(type(err), err)
                 logging.exception('********Unknown file extension********')
                 logging.error("file:" + self.reddit_post.url)
-                sys.exit()  # if the file is too large and its format is unknown, PIL can't resize it so we won't be able to post it.
+                # if the file is too large and its format is unknown, PIL can't resize it so we won't be able to post it
+                sys.exit()
             new_name = self.picture + "." + im_format
             os.rename(self.picture, new_name)
             self.picture = new_name
@@ -169,26 +171,21 @@ class TwitterBot:
         auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
         api = tweepy.API(auth)
         try:
-            # api.update_with_media(self.picture, status=status_update)
+            api.update_with_media(self.picture, status=status_update)
             print("OK")
         except tweepy.error.TweepError as err:
             print(type(err), err)
             logging.exception('********Tweepy error********')
             logging.error("status update: " + status_update)
-            # api.update_status(self.error_message)
+            api.update_status(self.error_message)
         except Exception as err:
             print(type(err), err)
             logging.exception('******Unexpected error******')
             logging.error("status update: " + status_update)
         finally:
-            pass
-            # os.remove(self.picture)
+            os.remove(self.picture)
 
 
 if __name__ == "__main__":
-    # botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
-    # botty_mcbotface.post_to_twitter()
-    bot = TwitterBot("AllThingsKute", "config.json")
-
-    bot.post_to_twitter()
-
+    botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
+    botty_mcbotface.post_to_twitter()
