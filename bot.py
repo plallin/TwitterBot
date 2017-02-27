@@ -4,10 +4,10 @@
 import tweepy
 import json
 import os
-from PIL import Image
+# from PIL import Image
 import logging
 import sys
-from resize_gif import resize_gif
+# from resize_gif import resize_gif
 from scrap_reddit import RedditPost
 import urllib.request
 
@@ -162,7 +162,7 @@ class TwitterBot:
         api = tweepy.API(auth)
         try:
             media = api.upload_chunked(self.picture)
-            api.update_status(status="Testing a new GIF / Video integration :-)!", media_ids=[media.media_id])
+            api.update_status(status=status_update, media_ids=[media.media_id])
             # api.update_with_media(self.picture, status=status_update)
         except tweepy.error.TweepError as err:
             print(type(err), err)
@@ -177,5 +177,5 @@ class TwitterBot:
 
 
 if __name__ == "__main__":
-    botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
+    botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
     botty_mcbotface.post_to_twitter()
