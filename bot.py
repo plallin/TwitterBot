@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import tweepy
-import requests
 import json
 import os
 from PIL import Image
@@ -10,6 +9,7 @@ import logging
 import sys
 from resize_gif import resize_gif
 from scrap_reddit import RedditPost
+import urllib.request
 
 logging.basicConfig(filename='error.log',
                     filemode='a',
@@ -99,48 +99,38 @@ class TwitterBot:
         """
         Downloads the picture from the top reddit post and resizes it if its size is above the maximum size allowed.
         """
-        req = requests.get(self.reddit_post.picture_url, stream=True)
-        if req.status_code == 200:
-            with open(self.picture, "wb") as img:
-                for chunk in req:
-                    img.write(chunk)
+        self.picture = self.picture + self.reddit_post.picture_extension
+        urllib.request.urlretrieve(self.reddit_post.picture_url, self.picture)
         picture_size = os.stat(self.picture).st_size
-        if picture_size <= type(self).MAX_IMAGE_SIZE_BYTES:
-            try:
-                im = Image.open(self.picture)
-                im_format = im.format
-            except OSError:
-                # if format is unknown, we will try to post to post the picture as a JPG as Twitter may allow it
-                im_format = "JPG"
-            new_name = self.picture + "." + im_format
-            os.rename(self.picture, new_name)
-            self.picture = new_name
-        else:
-            try:
-                im = Image.open(self.picture)
-                im_format = im.format
-            except OSError as err:
-                print(type(err), err)
-                logging.exception('********Unknown file extension********')
-                logging.error("file:" + self.reddit_post.url)
-                # if the file is too large and its format is unknown, PIL can't resize it so we won't be able to post it
-                sys.exit()
-            new_name = self.picture + "." + im_format
-            os.rename(self.picture, new_name)
-            self.picture = new_name
-            while picture_size > type(self).MAX_IMAGE_SIZE_BYTES:
-                if im_format == "GIF":
-                    resize_gif(self.picture)
-                    picture_size = os.stat(self.picture).st_size
-                else:
-                    self.resize_picture()
-                    picture_size = os.stat(self.picture).st_size
+        if picture_size > type(self).MAX_IMAGE_SIZE_BYTES:
+            logging.exception("********File too large********")
+            logging.error("Content: " + self.reddit_post.url)
+        # else:
+        #     try:
+        #         im = Image.open(self.picture)
+        #         im_format = im.format
+        #     except OSError as err:
+        #         print(type(err), err)
+        #         logging.exception('********Unknown file extension********')
+        #         logging.error("file:" + self.reddit_post.url)
+        #         # if the file is too large and its format is unknown, PIL can't resize it so we won't be able to post it
+        #         sys.exit()
+        #     new_name = self.picture + "." + im_format
+        #     os.rename(self.picture, new_name)
+        #     self.picture = new_name
+        #     while picture_size > type(self).MAX_IMAGE_SIZE_BYTES:
+        #         if im_format == "GIF":
+        #             resize_gif(self.picture)
+        #             picture_size = os.stat(self.picture).st_size
+        #         else:
+        #             self.resize_picture()
+        #             picture_size = os.stat(self.picture).st_size
 
-    def resize_picture(self):
-        """Resize the picture if it is above the maximum size allowed"""
-        picture = Image.open(self.picture).convert('RGB')
-        picture = picture.resize((picture.size[0] // 2, picture.size[1] // 2), Image.ANTIALIAS)
-        picture.save(self.picture, optimize=True, quality=85)
+    # def resize_picture(self):
+    #     """Resize the picture if it is above the maximum size allowed"""
+    #     picture = Image.open(self.picture).convert('RGB')
+    #     picture = picture.resize((picture.size[0] // 2, picture.size[1] // 2), Image.ANTIALIAS)
+    #     picture.save(self.picture, optimize=True, quality=85)
 
     def define_status_update(self):
         """
@@ -171,13 +161,13 @@ class TwitterBot:
         auth.set_access_token(self.ACCESS_TOKEN, self.SECRET_ACCESS_TOKEN)
         api = tweepy.API(auth)
         try:
-            api.update_with_media(self.picture, status=status_update)
-            print("OK")
+            media = api.upload_chunked(self.picture)
+            api.update_status(status="Testing a new GIF / Video integration :-)!", media_ids=[media.media_id])
+            # api.update_with_media(self.picture, status=status_update)
         except tweepy.error.TweepError as err:
             print(type(err), err)
             logging.exception('********Tweepy error********')
             logging.error("status update: " + status_update)
-            api.update_status(self.error_message)
         except Exception as err:
             print(type(err), err)
             logging.exception('******Unexpected error******')
@@ -187,5 +177,5 @@ class TwitterBot:
 
 
 if __name__ == "__main__":
-    botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
+    botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
     botty_mcbotface.post_to_twitter()

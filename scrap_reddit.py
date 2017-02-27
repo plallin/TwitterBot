@@ -26,6 +26,7 @@ class RedditPost:
         self._url = None
         self._title = None
         self._picture_url = None
+        self._picture_extension = None
 
     @property
     def subreddit(self):
@@ -60,21 +61,27 @@ class RedditPost:
     @property
     def url(self):
         if not self._url:
-            self.read_top_post()
+            self.fetch_content()
         return self._url
 
     @property
     def title(self):
         if not self._title:
-            self.read_top_post()
+            self.fetch_content()
         return self._title
 
     @property
     def picture_url(self):
         if not self._picture_url:
-            self.read_top_post()
+            self.fetch_content()
             self.format_picture_url()
         return self._picture_url
+
+    @property
+    def picture_extension(self):
+        if not self._picture_extension:
+            self.fetch_content()
+        return self._picture_extension
 
     def read_config_file(self):
         """Read the config file in order to get the attributes:
@@ -93,7 +100,7 @@ class RedditPost:
         self._user_agent = data["reddit_user_agent"]
         self._top_timeframe = data["update_rate"]
 
-    def read_top_post(self):
+    def fetch_content(self):
         """Read top post for a given timeframe, for the subreddit as input in the config file.
         It updates the bot attributes:
             _title: the title of the top post
@@ -107,23 +114,17 @@ class RedditPost:
                              client_secret=self.client_secret,
                              user_agent=self.user_agent)
         subreddit = reddit.subreddit(self.subreddit)
-        all_top_posts = subreddit.top(limit=10, time_filter=self.top_timeframe)
-        top_post = all_top_posts.next()
-        while not ("imgur.com" in top_post.url or "reddituploads.com" in top_post.url):
+        all_top_posts = subreddit.top(limit=100, time_filter=self.top_timeframe)
+        top_post = None  # initialising the variable
+        extension = -1
+        while extension == -1:
             top_post = all_top_posts.next()
+            path = top_post.url[top_post.url.rfind("/"):]  # find the path to the media content
+            extension = path.rfind(".")  # find the media extension
         self._title = top_post.title
         self._url = top_post.shortlink
         self._picture_url = top_post.url
+        self._picture_extension = path[extension:] if path[extension:].lower() != ".gifv" else ".mp4"
+        if self._picture_url[-5:].lower() == ".gifv":
+            self._picture_url = self._picture_url[:-5] + ".mp4"  # a url pointing to a gifv can't be properly downloaded
 
-    def format_picture_url(self):
-        """
-        Format the picture url so it links directly to the picture.
-        Works even if the picture format is not .jpg
-        """
-        domain = self._picture_url[:self._picture_url.rfind("/")]
-        path = self._picture_url[self._picture_url.rfind("/"):]
-        extension = path.rfind(".")
-        if extension < 0:
-            self._picture_url += ".jpg"
-        else:
-            self._picture_url = domain + path[:extension] + ".jpg"
