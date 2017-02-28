@@ -14,9 +14,9 @@ deploy:
   local_dir: dpl_cd_upload
   skip_cleanup: true
   on: &2
-    repo: organization/reponameHERE
+    repo: PaulineLc/TwitterBot
   bucket: twitterbots
-  region: US Standard
+  region: 
 - provider: codedeploy
   access_key_id: $AWS_ACCESS_KEY
   secret_access_key: $AWS_SECRET_KEY
@@ -25,7 +25,7 @@ deploy:
   bundle_type: zip
   application: TwitterBots
   deployment_group: TwitterBots
-  region: us-west-2a
+  region: us-west-2
   on: *2
 script:
   - zip -r latest *
