@@ -119,6 +119,7 @@ class RedditPost:
         extension = -1
         while extension == -1:
             top_post = all_top_posts.next()
+            # top_post.url = <insert offending link here>  # debug purposes only
             path = top_post.url[top_post.url.rfind("/"):]  # find the path to the media content
             extension = path.rfind(".")  # find the media extension
         self._title = top_post.title

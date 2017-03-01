@@ -24,6 +24,7 @@ class TwitterBot:
     MAX_MESSAGE_LENGTH = 140  # maximum status length allowed by Twitter
     MAX_MEDIA_SIZE_BYTES = 3072000  # maximum size of media allowed by Twitter
     LINK_LENGTH = 23  # Links posted to Twitter are always counted as 23 characters regardless of their actual length
+    MAX_VIDEO_LENGTH = 30
 
     def __init__(self, twitter_account, config_file):
         self.twitter_account = twitter_account
@@ -120,11 +121,20 @@ class TwitterBot:
         """
         Resize videos if they are above the the maximum size allowed
         """
+        newvid = None
+        temp_name = "newvid.mp4"
         while video_size > type(self).MAX_MEDIA_SIZE_BYTES:
             vid = mp.VideoFileClip(self.media)
-            vid = vid.resize(0.7)
-            vid.write_videofile(self.media)
-            video_size = os.stat(self.media).st_size
+            vid_duration = vid.duration
+            if vid.duration > type(self).MAX_VIDEO_LENGTH:
+                vid = vid.cutout(ta=0.0, tb=vid_duration - type(self).MAX_VIDEO_LENGTH)  # cut video to 30 seconds.
+                vid.write_videofile(temp_name)
+            else:
+                newvid = vid.resize(0.7)
+                newvid.write_videofile(temp_name)
+            video_size = os.stat(temp_name).st_size
+        os.remove(self.media)
+        os.rename(temp_name, self.media)
 
     def define_status_update(self):
         """
@@ -157,7 +167,6 @@ class TwitterBot:
         try:
             media = api.upload_chunked(self.media)
             api.update_status(status=status_update, media_ids=[media.media_id])
-            # api.update_with_media(self.picture, status=status_update)
         except tweepy.error.TweepError as err:
             print(type(err), err)
             logging.exception('********Tweepy error********')
