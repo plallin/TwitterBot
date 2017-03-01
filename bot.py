@@ -186,6 +186,6 @@ class TwitterBot:
 
 
 if __name__ == "__main__":
-    botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
-    # botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
+    # botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
+    botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
     botty_mcbotface.post_to_twitter()
