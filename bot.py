@@ -10,6 +10,7 @@ import sys
 from scrap_reddit import RedditPost
 import urllib.request
 import moviepy.editor as mp
+import magic
 
 logging.basicConfig(filename='error.log',
                     filemode='a',
@@ -102,8 +103,11 @@ class TwitterBot:
         """
         Downloads the picture from the top reddit post and resizes it if its size is above the maximum size allowed.
         """
-        self.media = self.media + self.reddit_post.picture_extension
         urllib.request.urlretrieve(self.reddit_post.picture_url, self.media)
+        mime = magic.Magic(mime=True).from_file(self.media)
+        mime = '.' + mime.split('/')[1]
+        os.rename(self.media, self.media + mime)
+        self.media += mime
         picture_size = os.stat(self.media).st_size
         if picture_size > type(self).MAX_MEDIA_SIZE_BYTES:
             try:
@@ -184,4 +188,4 @@ class TwitterBot:
 if __name__ == "__main__":
     botty_mcbotface = TwitterBot("AllThingsKute", "config.json")
     # botty_mcbotface = TwitterBot(sys.argv[1], sys.argv[2])
-    # botty_mcbotface.post_to_twitter()
+    botty_mcbotface.post_to_twitter()
