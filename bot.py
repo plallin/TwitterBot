@@ -158,7 +158,8 @@ class TwitterBot:
                 message += " " + self.hashtags[i]
                 i += 1
         final_message = message + via + self.reddit_post.url
-        return final_message
+        return "Please! Please! Trow my stick :-("  # temp status to test Travis automated build.
+        #return final_message
 
     def post_to_twitter(self):
         """
