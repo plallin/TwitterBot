@@ -4,4 +4,4 @@ os: linux
 
 files:
   - source: ./
-    destination: /home/ubuntu/TestFolder
+    destination: /home/ubuntu/TwitterBot
